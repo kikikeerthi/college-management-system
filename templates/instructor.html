@@ -99,6 +99,48 @@ Instructor Dashboard
     </div>
   </div>
 
+    <hr class="my-4" />
+    <div class="jumbotron text-center">
+    <h3 class="display-6">Assign/Modify Grades</h3>
+    </div>
+
+    <div class="container">
+    <form method="POST" action="{{ url_for('assign_grade') }}">
+        <!-- Select Course -->
+        <div class="form-group">
+        <label for="courseSelect">Course:</label>
+        <select class="form-control" id="courseSelect" name="course_id" required>
+            <option value="" disabled selected>Select a course</option>
+            {% for teach, course in courses_taught %}
+            <option value="{{ teach.course_id }}">{{ course.title }} ({{ teach.course_id }})</option>
+            {% endfor %}
+        </select>
+        </div>
+
+        <!-- Select Student -->
+        <div class="form-group mt-3">
+        <label for="studentSelect">Student:</label>
+        <select class="form-control" id="studentSelect" name="student_id" required>
+            <option value="" disabled selected>Select a student</option>
+            {% for student in students %}
+            <option value="{{ student.ID }}">{{ student.name }} ({{ student.ID }})</option>
+            {% endfor %}
+        </select>
+        </div>
+
+        <!-- Grade Input -->
+        <div class="form-group mt-3">
+        <label for="grade">Grade:</label>
+        <input type="text" class="form-control" id="grade" name="grade" required placeholder="e.g., A, B+, C">
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-group mt-3">
+        <button type="submit" class="btn btn-primary">Submit Grade</button>
+        </div>
+    </form>
+    </div>  
+
   <hr class="my-4" />
   <div class="jumbotron text-center">
     <h3 class="display-6">Take up Courses</h3>

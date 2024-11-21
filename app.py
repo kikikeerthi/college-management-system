@@ -256,6 +256,7 @@ def login():
 def dashboard():
     if current_user.role == 'admin':
         return render_template('admin.html')
+
     elif current_user.role == 'student':
         student = Student.query.filter_by(ID=current_user.sid).first()
         if student:
@@ -264,7 +265,8 @@ def dashboard():
             return render_template("student.html", student=student, courses_taken=courses_taken, available_courses=available_courses)
         else:
             return "Student not found", 404
-    if current_user.role == 'instructor':
+
+    elif current_user.role == 'instructor':
         instructor = Instructor.query.filter_by(ID=current_user.sid).first()
         if instructor:
             # Get the courses the instructor is currently teaching and join with Course to get course name
@@ -274,10 +276,22 @@ def dashboard():
             taught_course_ids = [course.course_id for teach, course in courses_taught]
             available_courses = Course.query.filter(Course.course_id.notin_(taught_course_ids)).all()
 
-            # Render the template with instructor info, taught courses, and available courses
-            return render_template("instructor.html", instructor=instructor, courses_taught=courses_taught, available_courses=available_courses)
+            # Get all students (for assigning grades)
+            students = Student.query.all()
+
+            # Render the template with instructor info, taught courses, available courses, and students
+            return render_template(
+                "instructor.html",
+                instructor=instructor,
+                courses_taught=courses_taught,
+                available_courses=available_courses,
+                students=students
+            )
         else:
             return "Instructor not found", 404
+
+    else:
+        return "Invalid role", 403
 
 @app.route('/enroll', methods=['POST'])
 @login_required
@@ -369,6 +383,32 @@ def remove_teaches(course_id):
 
         return redirect(url_for('dashboard'))
     return redirect(url_for('login'))
+
+@app.route('/assign_grade', methods=['POST'])
+def assign_grade():
+    if current_user.role != 'instructor':
+        return "Access denied", 403
+
+    course_id = request.form['course_id']
+    student_id = request.form['student_id']
+    grade = request.form['grade']
+
+    # Verify the instructor teaches the course
+    teaches = Teaches.query.filter_by(ID=current_user.sid, course_id=course_id).first()
+    if not teaches:
+        return "You are not authorized to assign grades for this course", 403
+
+    # Check if the student is enrolled in the course
+    takes = Takes.query.filter_by(ID=student_id, course_id=course_id).first()
+    if not takes:
+        return "The student is not enrolled in this course", 400
+
+    # Assign or update the grade
+    takes.grade = grade
+    db.session.commit()
+
+    flash("Grade successfully assigned/updated", "success")
+    return redirect(url_for('dashboard'))
 
 
 @app.route('/logout')
