@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}
+Instructor Dashboard
+{% endblock title %}
+
+{% block body %}
+<div class="container mt-5">
+  <div class="card">
+    <div class="card-header text-center bg-info">
+      <div class="jumbotron text-center">
+        <h3 class="display-6">{{ instructor.name }}'s Profile</h3>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-1"></div>
+        <div class="col-md-3">
+          <!-- Instructor Image -->
+          <img src="static/images/dept.jpg" class="img-fluid rounded-circle" alt="Instructor Image" />
+        </div>
+        <div class="col-md-1"></div>
+        <div class="col-md-7">
+          <div class="jumbotron text-center">
+            <h3 class="card-text font-weight-light">
+              ID: {{ instructor.ID }}
+            </h3>
+            <h3 class="card-text font-weight-light">
+              Department: {{ instructor.department.dept_name }}
+            </h3>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="my-4" />
+  <div class="jumbotron text-center">
+    <h3 class="display-6">Courses Taught</h3>
+  </div>
+
+  <div class="accordion" id="accordionFlushExample">
+    <div class="accordion-item">
+      <h2 class="accordion-header">
+        <button
+          class="btn btn-outline-info accordion-button collapsed"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#flush-collapse-i"
+          aria-expanded="false"
+          aria-controls="flush-collapse-i"
+        >
+          <h5>Your Courses</h5>
+        </button>
+      </h2>
+      <div
+        id="flush-collapse-i"
+        class="accordion-collapse collapse show"
+        data-bs-parent="#accordionFlushExample"
+      >
+        <div class="accordion-body">
+        <table class="table table-striped caption-top">
+            <thead class="table">
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Course Id</th>
+                <th scope="col">Course Name</th>
+                <th scope="col">Semester</th>
+                <th scope="col">Year</th>
+                <th scope="col">Action</th>
+            </tr>
+            </thead>
+            <tbody class="table-group-divider">
+            {% for teach, course in courses_taught %}
+            <tr>
+                <th scope="row">{{ loop.index }}</th>
+                <td>{{ teach.course_id }}</td>  <!-- Access course_id from Teaches -->
+                <td>{{ course.title }}</td>  <!-- Access course_name from Course -->
+                <td>{{ teach.semester }}</td>
+                <td>{{ teach.year }}</td>
+                <td>
+                <form method="POST" action="{{ url_for('remove_teaches', course_id=teach.course_id) }}">
+                    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                </form>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot>
+            <tr>
+                <td colspan="100%" align="center">
+                {{ courses_taught|length ~ " Courses Taught." }}
+                </td>
+            </tr>
+            </tfoot>
+        </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="my-4" />
+  <div class="jumbotron text-center">
+    <h3 class="display-6">Take up Courses</h3>
+  </div>
+
+<div class="container">
+    <form method="POST" action="{{ url_for('add_teaches') }}">
+        <!-- Course Selection -->
+        <div class="form-group">
+            <label for="courseSelect">Select a Course to Teach:</label>
+            <select class="form-control" id="courseSelect" name="course_id" required>
+                <option value="" disabled selected>Select a course</option>
+                {% for course in available_courses %}
+                    <option value="{{ course.course_id }}">{{ course.course_name }} ({{ course.course_id }})</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Section ID Input -->
+        <div class="form-group mt-3">
+            <label for="sec_id">Section ID:</label>
+            <input type="text" class="form-control" id="sec_id" name="sec_id" required>
+        </div>
+
+        <!-- Semester Input -->
+        <div class="form-group mt-3">
+            <label for="semester">Semester:</label>
+            <input type="text" class="form-control" id="semester" name="semester" required placeholder="e.g., Spring, Fall">
+        </div>
+
+        <!-- Year Input -->
+        <div class="form-group mt-3">
+            <label for="year">Year:</label>
+            <input type="number" class="form-control" id="year" name="year" required placeholder="e.g., 2024">
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-group mt-3">
+            <button type="submit" class="btn btn-success">Take Course</button>
+        </div>
+    </form>
+</div>
+</div>
+{% endblock body %}

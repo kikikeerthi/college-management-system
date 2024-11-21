@@ -130,85 +130,6 @@ class Timeslot(db.Model):
     start_time = db.Column(db.Time)
     end_time = db.Column(db.Time)
 
-@app.route('/test')
-def test():
-    try:
-        # Create sample departments
-        dept1 = Department(dept_name="Computer Science", building="Building A", budget=1000000)
-        dept2 = Department(dept_name="Mathematics", building="Building B", budget=500000)
-        
-        # Add to the session
-        db.session.add_all([dept1, dept2])
-
-        # Create sample classrooms
-        classroom1 = Classroom(building="Building A", room_number="101", capacity=30)
-        classroom2 = Classroom(building="Building B", room_number="201", capacity=40)
-        
-        # Add to the session
-        db.session.add_all([classroom1, classroom2])
-
-        # Create sample courses
-        course1 = Course(course_id="CS101", title="Introduction to Computer Science", dept_name="Computer Science", credits=3)
-        course2 = Course(course_id="MATH101", title="Calculus I", dept_name="Mathematics", credits=3)
-        course3 = Course(course_id="CS102", title="Data Structures", dept_name="Computer Science", credits=3)
-        course4 = Course(course_id="MATH102", title="Calculus II", dept_name="Mathematics", credits=3)
-        
-        # Add to the session
-        db.session.add_all([course1, course2, course3, course4])
-
-        # Create sample instructors
-        instructor1 = Instructor(ID="I123", name="Dr. Smith", dept_name="Computer Science", salary=80000)
-        instructor2 = Instructor(ID="I124", name="Dr. Johnson", dept_name="Mathematics", salary=75000)
-        
-        # Add to the session
-        db.session.add_all([instructor1, instructor2])
-
-        # Create sample students
-        student1 = Student(ID="S123", name="Alice", dept_name="Computer Science", tot_cred=30)
-        student2 = Student(ID="S124", name="Bob", dept_name="Mathematics", tot_cred=25)
-        
-        # Add to the session
-        db.session.add_all([student1, student2])
-
-        # Create sample sections
-        section1 = Section(course_id="CS101", sec_id="001", semester="Fall", year=2024, building="Building A", room_number="101", time_slot_id="T01")
-        section2 = Section(course_id="MATH101", sec_id="002", semester="Fall", year=2024, building="Building B", room_number="201", time_slot_id="T02")
-        
-        # Add to the session
-        db.session.add_all([section1, section2])
-
-        # Create sample enrollment in courses (Takes table)
-        take1 = Takes(ID="S123", course_id="CS101", sec_id="001", semester="Fall", year=2024, grade="A")
-        take2 = Takes(ID="S124", course_id="MATH101", sec_id="002", semester="Fall", year=2024, grade="B")
-        
-        # Add to the session
-        db.session.add_all([take1, take2])
-
-        # Create sample advisor assignments (Advisor table)
-        advisor1 = Advisor(s_ID="S123", i_ID="I123")  # Alice's advisor is Dr. Smith
-        advisor2 = Advisor(s_ID="S124", i_ID="I124")  # Bob's advisor is Dr. Johnson
-        
-        # Add to the session
-        db.session.add_all([advisor1, advisor2])
-
-        # Commit courses first before prerequisites
-        db.session.commit()
-
-        # Create sample prerequisites (Prereq table) after courses are committed
-        prereq1 = Prereq(course_id="CS102", prereq_id="CS101")  # CS102 has CS101 as a prerequisite
-        prereq2 = Prereq(course_id="MATH102", prereq_id="MATH101")  # MATH102 has MATH101 as a prerequisite
-        
-        # Add to the session
-        db.session.add_all([prereq1, prereq2])
-
-        # Commit all the additions to the database
-        db.session.commit()
-
-        return jsonify({"message": "Sample data added successfully!"}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 400
-
 @app.route('/add_sample_user')
 def add_sample_user():
     try:
@@ -229,14 +150,83 @@ def add_sample_user():
         
         # Add the admin user to the User table
         db.session.add(sample_admin_user)
+
+        # Create a sample instructor user
+        sample_instructor_user = User(sid="I1", password="instructorpassword", role="instructor")
         
-        # Commit the session to save both records
+        # Add the instructor user to the User table
+        db.session.add(sample_instructor_user)
+
+        # Ensure the department exists in the Department table (assuming "Computer Science")
+        department = Department.query.filter_by(dept_name="Computer Science").first()
+        if not department:
+            department = Department(dept_name="Computer Science")
+            db.session.add(department)
+            db.session.commit()  # Commit to save the new department
+
+        # Create a corresponding instructor record
+        sample_instructor = Instructor(
+            ID="I1",
+            name="Dr. Alice Smith",
+            dept_name="Computer Science",  # Assuming the department is already available
+            salary=85000.00,  # Sample salary
+            department=department  # Associate with the department
+        )
+        
+        # Add the instructor to the Instructor table
+        db.session.add(sample_instructor)
+
+        # Commit the session to save all records
         db.session.commit()
         
-        return jsonify({"message": "Sample user and student added successfully!"}), 201
+        return jsonify({"message": "Sample user, student, and instructor added successfully!"}), 201
     except Exception as e:
         db.session.rollback()  # Rollback in case of error
         return jsonify({"error": str(e)}), 400
+
+@app.route('/delete_sample_user')
+def delete_sample_user():
+    try:
+        # Delete the sample user from the User table
+        sample_user = User.query.filter_by(sid="S1").first()
+        if sample_user:
+            db.session.delete(sample_user)
+
+        # Delete the sample admin user from the User table
+        sample_admin_user = User.query.filter_by(sid="A1").first()
+        if sample_admin_user:
+            db.session.delete(sample_admin_user)
+
+        # Delete the sample instructor user from the User table
+        sample_instructor_user = User.query.filter_by(sid="I1").first()
+        if sample_instructor_user:
+            db.session.delete(sample_instructor_user)
+
+        # Delete the student record from the Student table
+        sample_student = Student.query.filter_by(ID="S1").first()
+        if sample_student:
+            db.session.delete(sample_student)
+
+        # Delete the instructor record from the Instructor table
+        sample_instructor = Instructor.query.filter_by(ID="I1").first()
+        if sample_instructor:
+            db.session.delete(sample_instructor)
+
+        # Check if the "Computer Science" department has no other instructors or students
+        department = Department.query.filter_by(dept_name="Computer Science").first()
+        if department:
+            # If no other instructors or students are linked to this department, we can delete it
+            if not department.instructors and not department.students:
+                db.session.delete(department)
+
+        # Commit the session to delete all the records
+        db.session.commit()
+        
+        return jsonify({"message": "Sample user, student, instructor, and department deleted successfully!"}), 200
+    except Exception as e:
+        db.session.rollback()  # Rollback in case of error
+        return jsonify({"error": str(e)}), 400
+
 
 # Routes
 @app.route('/')
@@ -274,6 +264,20 @@ def dashboard():
             return render_template("student.html", student=student, courses_taken=courses_taken, available_courses=available_courses)
         else:
             return "Student not found", 404
+    if current_user.role == 'instructor':
+        instructor = Instructor.query.filter_by(ID=current_user.sid).first()
+        if instructor:
+            # Get the courses the instructor is currently teaching and join with Course to get course name
+            courses_taught = db.session.query(Teaches, Course).join(Course, Teaches.course_id == Course.course_id).filter(Teaches.ID == current_user.sid).all()
+
+            # Get all available courses (those not currently taught by the instructor)
+            taught_course_ids = [course.course_id for teach, course in courses_taught]
+            available_courses = Course.query.filter(Course.course_id.notin_(taught_course_ids)).all()
+
+            # Render the template with instructor info, taught courses, and available courses
+            return render_template("instructor.html", instructor=instructor, courses_taught=courses_taught, available_courses=available_courses)
+        else:
+            return "Instructor not found", 404
 
 @app.route('/enroll', methods=['POST'])
 @login_required
@@ -300,6 +304,72 @@ def enroll():
     
     flash("Successfully enrolled in the course!", "success")
     return redirect(url_for('dashboard'))
+
+@app.route('/add_teaches', methods=['POST'])
+@login_required
+def add_teaches():
+    if current_user.role == 'instructor':
+        instructor = Instructor.query.filter_by(ID=current_user.sid).first()
+        course_id = request.form['course_id']
+        
+        # Retrieve the selected course from the Course table
+        course = Course.query.filter_by(course_id=course_id).first()
+
+        # Retrieve section, semester, and year from form or set defaults
+        sec_id = request.form.get('sec_id')  # Assuming section ID is provided by the form
+        semester = request.form.get('semester')  # Assuming semester is provided by the form
+        year = request.form.get('year')  # Assuming year is provided by the form
+        
+        # Make sure all required fields are provided
+        if instructor and course and sec_id and semester and year:
+            # Check if this course is already assigned to the instructor
+            existing_teach = Teaches.query.filter_by(
+                ID=instructor.ID,
+                course_id=course.course_id,
+                sec_id=sec_id,
+                semester=semester,
+                year=year
+            ).first()
+
+            if not existing_teach:  # If no record exists
+                new_teaches = Teaches(
+                    ID=instructor.ID,
+                    course_id=course.course_id,
+                    sec_id=sec_id,
+                    semester=semester,
+                    year=year
+                )
+                db.session.add(new_teaches)
+                db.session.commit()
+
+                flash(f"Successfully added {course.title} (Course ID: {course.course_id}) to your teaching schedule for {semester} {year}.", "success")
+            else:
+                flash(f"You are already assigned to teach {course.title} (Course ID: {course.course_id}) in {semester} {year}.", "warning")
+        else:
+            flash("Missing required data: course, section, semester, or year.", "danger")
+
+        return redirect(url_for('dashboard'))
+
+    return redirect(url_for('login'))
+
+@app.route('/remmove_teaches/<course_id>', methods=['POST'])
+@login_required
+def remove_teaches(course_id):
+    if current_user.role == 'instructor':
+        instructor = Instructor.query.filter_by(ID=current_user.sid).first()
+        teaches = Teaches.query.filter_by(ID=instructor.ID, course_id=course_id).first()
+
+        if teaches:
+            db.session.delete(teaches)
+            db.session.commit()
+
+            flash(f"Successfully removed {teaches.course_id} from your courses.", "success")
+        else:
+            flash("Course not found in your teaching list.", "danger")
+
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
+
 
 @app.route('/logout')
 @login_required
