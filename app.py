@@ -270,9 +270,36 @@ def dashboard():
         student = Student.query.filter_by(ID=current_user.sid).first()
         if student:
             courses_taken = Takes.query.filter_by(ID=current_user.sid).all()
-            return render_template("student.html", student=student, courses_taken=courses_taken)
+            available_courses = Course.query.all()  # Fetch all available courses
+            return render_template("student.html", student=student, courses_taken=courses_taken, available_courses=available_courses)
         else:
             return "Student not found", 404
+
+@app.route('/enroll', methods=['POST'])
+@login_required
+def enroll():
+    course_id = request.form['course_id']
+    student_id = current_user.sid
+
+    # Check if the student is already enrolled in the course
+    existing_enrollment = Takes.query.filter_by(ID=student_id, course_id=course_id).first()
+    if existing_enrollment:
+        flash("You are already enrolled in this course.", "warning")
+        return redirect(url_for('dashboard'))
+    
+    # Get the course and section to enroll in
+    course = Course.query.filter_by(course_id=course_id).first()
+    if not course:
+        flash("Course not found.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Enroll the student in the course (assuming sec_id is provided or defaulted)
+    new_enrollment = Takes(ID=student_id, course_id=course_id, sec_id="A1", semester="Spring", year=2024)
+    db.session.add(new_enrollment)
+    db.session.commit()
+    
+    flash("Successfully enrolled in the course!", "success")
+    return redirect(url_for('dashboard'))
 
 @app.route('/logout')
 @login_required
